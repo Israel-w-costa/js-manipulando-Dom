@@ -4,18 +4,16 @@ const formTask = document.querySelector ('.app__form-add-task')
 const formLabel = document.querySelector ('.app__form-label')
 const toggleFormTaskBtn = document.querySelector ('.app__button--add-task')
 
+const textarea = document.querySelector ('.app__form-textarea')
+const btnCancel = document.querySelector ('.app__form-footer__button--cancel')
+
+const taskAtiveDescription  = document.querySelector ('.app__section-active-task-description')
 
 
-let tarefas = [
-    {
-        descricao: 'Tarefa concluída',
-        concluida : true
-    },
-    {
-        descricao: 'tarefa pedente',
-        concluida : false
-    }
-]
+let localStorageTarefas = localStorage.getItem('tarefas')
+let tarefas = localStorageTarefas ? JSON.parse (localStorageTarefas) : []
+let tarefaSelecionada = null
+let itemTarefaSelecionada = null
 
 
 const taskIconSvg = `<svg class="app__section-task-icon-status" width="24" height="24" viewBox="0 0 24 24"
@@ -24,8 +22,27 @@ const taskIconSvg = `<svg class="app__section-task-icon-status" width="24" heigh
     <path
         d="M9 16.1719L19.5938 5.57812L21 6.98438L9 18.9844L3.42188 13.4062L4.82812 12L9 16.1719Z"
         fill="#01080E" />
-</svg>
-`
+</svg>`
+
+
+const selicionaTarefa = (tarefa, elemento) => {
+
+    document.querySelectorAll('.app__section-task-list-item-active').forEach(function (button) {
+        button.classList.remove('app__section-task-list-item-active')
+    })
+    
+    if (tarefaSelecionada == tarefa) {
+        taskAtiveDescription.textContent = null
+        itemTarefaSelecionada = null
+        tarefaSelecionada = null
+        return
+    }
+    
+    tarefaSelecionada = tarefa
+    itemTarefaSelecionada = elemento
+    taskAtiveDescription.textContent = tarefa.descricao
+    elemento.classList.add('app__section-task-list-item-active') }
+
 
 function createTask (tarefa) {
     const li = document.createElement ('li')
@@ -42,7 +59,22 @@ function createTask (tarefa) {
 
     li.appendChild (paragraph)
 
+    li.onclick = () => {
+        selicionaTarefa (tarefa, li )
+    }
+
+
     return li
+}
+
+const limparForm = () => {
+    textarea.value =''
+    formTask.classList.add('hidden')
+
+}
+
+const updateLocalStorage = () => {
+    localStorage.setItem ('tarefas', JSON.stringify (tarefas))
 }
 
 tarefas.forEach ((tarefa)=> {
@@ -54,3 +86,20 @@ toggleFormTaskBtn.addEventListener ('click', () => {
     formLabel.textContent = 'Adicionando tarefa'
     formTask.classList.toggle('hidden')
 })
+
+formTask.addEventListener ('submit', (event) => {
+    event.preventDefault()
+    const task = {
+        descricao: textarea.value,
+        concluida : false
+    }
+    tarefas.push(task)
+    
+    const taskItem = createTask (task)
+    taskListContainer.appendChild (taskItem)
+
+    updateLocalStorage()
+    limparForm()
+})
+
+btnCancel.addEventListener ('click', limparForm )
