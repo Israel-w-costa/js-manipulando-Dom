@@ -12,9 +12,11 @@ const taskAtiveDescription  = document.querySelector ('.app__section-active-task
 
 let localStorageTarefas = localStorage.getItem('tarefas')
 let tarefas = localStorageTarefas ? JSON.parse (localStorageTarefas) : []
+
 let tarefaSelecionada = null
 let itemTarefaSelecionada = null
-
+let tarefaEmEdicao = null
+let paragraphEmEdicao = null
 
 const taskIconSvg = `<svg class="app__section-task-icon-status" width="24" height="24" viewBox="0 0 24 24"
     fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -23,6 +25,8 @@ const taskIconSvg = `<svg class="app__section-task-icon-status" width="24" heigh
         d="M9 16.1719L19.5938 5.57812L21 6.98438L9 18.9844L3.42188 13.4062L4.82812 12L9 16.1719Z"
         fill="#01080E" />
 </svg>`
+
+
 
 
 const selicionaTarefa = (tarefa, elemento) => {
@@ -44,6 +48,19 @@ const selicionaTarefa = (tarefa, elemento) => {
     elemento.classList.add('app__section-task-list-item-active') }
 
 
+function selecionaTarefaParaEditar (tarefa, elemento) {
+    if ( tarefaEmEdicao == tarefa) {
+        limparForm () 
+            return
+        }
+    
+    tarefaEmEdicao = tarefa
+    paragraphEmEdicao = elemento
+    formLabel.textContent = 'Editando Tarefa'
+    textarea.value = tarefa.descricao
+    formTask.classList.remove('hidden')
+}
+
 function createTask (tarefa) {
     const li = document.createElement ('li')
     li.classList.add ('app__section-task-list-item')
@@ -55,19 +72,44 @@ function createTask (tarefa) {
     paragraph.classList.add ('app__section-task-list-item-description')
     paragraph.textContent =tarefa.descricao
 
-    li.appendChild(svgIcon)
+    const button = document.createElement ('button')
+    button.classList.add ('app_button-edit')
+    const imageEdit = document.createElement ('img')
+    imageEdit.setAttribute ('src', '../imagens/edit.png')
 
+
+    svgIcon.addEventListener ('click', (event)=> {
+        event.stopPropagation()
+        button.setAttribute ('disable', true)
+        li.classList.add('app__section-task-list-item-complete')
+    })
+
+    if (tarefa.concluida) {
+        button.setAttribute ('disable', true)
+        li.classList.add('app__section-task-list-item-complete')
+    }
+
+    li.appendChild(svgIcon)
     li.appendChild (paragraph)
+    li.appendChild(button)
+    button.appendChild(imageEdit)
 
     li.onclick = () => {
         selicionaTarefa (tarefa, li )
     }
 
+    imageEdit.addEventListener ('click', (event) =>{
+        event.stopPropagation()
+        selecionaTarefaParaEditar(tarefa, paragraph)
+
+    })
 
     return li
 }
 
 const limparForm = () => {
+    let tarefaEmEdicao = null
+    let paragraphEmEdicao = null
     textarea.value =''
     formTask.classList.add('hidden')
 
@@ -89,6 +131,11 @@ toggleFormTaskBtn.addEventListener ('click', () => {
 
 formTask.addEventListener ('submit', (event) => {
     event.preventDefault()
+    if (tarefaEmEdicao) {
+        tarefaEmEdicao.descricao = textarea.value
+        paragraphEmEdicao.textContent = textarea.value
+    } else {
+
     const task = {
         descricao: textarea.value,
         concluida : false
@@ -96,7 +143,7 @@ formTask.addEventListener ('submit', (event) => {
     tarefas.push(task)
     
     const taskItem = createTask (task)
-    taskListContainer.appendChild (taskItem)
+    taskListContainer.appendChild (taskItem)}
 
     updateLocalStorage()
     limparForm()
